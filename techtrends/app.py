@@ -7,6 +7,7 @@ from telnetlib import STATUS
 from urllib import response
 import json
 
+
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
 
@@ -78,12 +79,33 @@ def create():
 # implementing health check
 @app.route('/healthz', methods = ['GET'])
 def health():
-    response = app.response_class(
+    try:
+        conn = get_db_connection()
+        # there is connection testing posts table
+        test = conn.execute('select * from posts').fetchall()
+        if test:
+            response = app.response_class(
         response = json.dumps({"status": "OK, healthy"}),
         status = 200,
         mimetype= 'application/json'
+        )
+            return response
+        else:
+            response = app.response_class(
+        response = json.dumps({"Error": "Unhealthy"}),
+        status = 500,
+        mimetype= 'application/json'
+        )
+        return response
+    # if there is no connection
+    except:
+
+        response = app.response_class(
+        response = json.dumps({"Error": "Unhealthy"}),
+        status = 500,
+        mimetype= 'application/json'
     )
-    return response
+        return response
 
 # query the db for the number of posts
 def query():
