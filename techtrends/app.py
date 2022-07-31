@@ -1,13 +1,23 @@
+from crypt import methods
+from fileinput import filename
+import logging
+import mimetypes
 import sqlite3
+from telnetlib import STATUS
+from urllib import response
+import json
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
 
 # Function to get a database connection.
 # This function connects to database with the name `database.db`
+db_connetion_count = 0
 def get_db_connection():
     connection = sqlite3.connect('database.db')
     connection.row_factory = sqlite3.Row
+    global db_connetion_count
+    db_connetion_count += 1
     return connection
 
 # Function to get a post using its ID
@@ -65,6 +75,33 @@ def create():
 
     return render_template('create.html')
 
+# implementing health check
+@app.route('/healthz', methods = ['GET'])
+def health():
+    response = app.response_class(
+        response = json.dumps({"status": "OK, healthy"}),
+        status = 200,
+        mimetype= 'application/json'
+    )
+    return response
+
+# query the db for the number of posts
+def query():
+    with get_db_connection() as con:
+        n_posts = con.execute('select count(*) as count from posts').fetchall()
+    return n_posts[0]['count']
+
+# metrics implementation
+@app.route('/metrics', methods=['GET'])
+def metric():
+    response = app.response_class(
+        response = json.dumps({'post_count':query(), 'db_connetion_count': db_connetion_count}),
+        status= 200,
+        mimetype= 'application/json'
+    )
+    return response
+
 # start the application on port 3111
 if __name__ == "__main__":
+   logging.basicConfig(filename= 'app.log', level= logging.DEBUG, )
    app.run(host='0.0.0.0', port='3111')
