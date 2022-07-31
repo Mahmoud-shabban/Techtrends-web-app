@@ -50,5 +50,5 @@ jobs:
         file: ./Dockerfile
         platforms: linux/amd64
         push: true
-        tags: coralsparrow/techtrends:latest
+        tags: ${{ steps.meta.outputs.tags }}
     
