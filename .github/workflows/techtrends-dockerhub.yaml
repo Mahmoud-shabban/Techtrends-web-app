@@ -1,6 +1,9 @@
-name: build and push techtrends image
+name: TechTrends - Package with Docker
 
-on: [push]
+on: 
+  push:
+    branches:
+      [main]
 
 jobs:
   Build:
